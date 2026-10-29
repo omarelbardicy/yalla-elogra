@@ -250,11 +250,18 @@ const LEVELS=[
   stops:[['رمسيس',0],['العباسية',10],['مدينة نصر',12.5],['الحي العاشر',15],['التجمع الخامس',17.5]],pax:[3,3],group:3,mixed:true,bills:[20,50,100,200],half:true,time:21,board:false,tod:3,float:{0.5:1,1:1,5:1,10:1}},
  {route:'موقف عبود ← إسكندرية',tip:'مشوار سفر: فلوس كبيرة، أربع ركاب في المرة، فكة قليلة، والتعريفة مستخبية. ركّز يا كابتن.',
   stops:[['موقف عبود',0],['بنها',45],['طنطا',70],['دمنهور',90],['إسكندرية',110]],pax:[3,4],group:4,mixed:true,bills:[50,100,200],half:false,time:24,board:false,tod:3,float:{5:1,10:1}},
+ {route:'الجيزة ← 6 أكتوبر',tip:'طريق المحور: أنصاص وفلوس كبيرة، والركاب نازلين في حتت مختلفة. التعريفة مستخبية.',
+  stops:[['ميدان الجيزة',0],['المحور',15],['الحصري',20],['الحي المتميز',22.5],['جامعة مصر',25]],pax:[3,4],group:3,mixed:true,bills:[20,50,100,200],half:true,time:22,board:false,tod:2,float:{0.5:1,1:2,5:1}},
+ {route:'المنيب ← الفيوم',tip:'سفر للصعيد: كل ورقة ميتين محتاجة فكة. فكّر قبل ما تفكّ من الأسطى.',
+  stops:[['موقف المنيب',0],['الحوامدية',17.5],['البدرشين',22.5],['العياط',32.5],['الفيوم',47.5]],pax:[3,4],group:4,mixed:true,bills:[50,100,200],half:true,time:23,board:false,tod:0,float:{0.5:1,1:1,5:1,10:1}},
+ {route:'عبود ← المنصورة',tip:'أربع ركاب في كل محطة ومجموعات كبيرة. الحساب للأسطى هيبقى أرقام كبيرة.',
+  stops:[['موقف عبود',0],['قليوب',15],['بنها',35],['ميت غمر',55],['المنصورة',75]],pax:[4,4],group:4,mixed:true,bills:[50,100,200],half:false,time:24,board:false,tod:1,float:{5:1,10:1}},
+ {route:'الترجمان ← شرم الشيخ',tip:'آخر مشوار وأصعبهم: أسعار سفر، ميتينات بس تقريباً، وفكة قليلة جداً. لو خلصته تبقى أسطى بجد.',
+  stops:[['الترجمان',0],['السويس',120],['رأس سدر',180],['الطور',250],['شرم الشيخ',320]],pax:[4,4],group:4,mixed:true,bills:[100,200],half:false,time:25,board:false,tod:3,float:{5:1,10:1,20:1}},
 ];
 /* gentler curve: more time, extra lives early on, and on-screen arithmetic help that fades out
    help 2 = fare and change shown, 1 = fare only, 0 = none */
-const SONGS=[['songs/song1.mp3','Tabeeb Garrah'],['songs/song2.mp3','Ana Msh Dollar'],['songs/song3.mp3','Halya Bel Swak'],['songs/song4.mp3','Khamorgia']];
-LEVELS.forEach((l,i)=>{l.time+=[10,10,9,8,7,6,6,5][i];l.help=i<2?2:i<5?1:0;l.lives=i<3?5:i<6?4:3;l.song=SONGS[Math.floor(i/2)%SONGS.length];});
+LEVELS.forEach((l,i)=>{l.time+=[10,10,9,8,7,6,6,5,5,4,4,3][i];l.help=i<2?2:i<5?1:0;l.lives=i<3?5:i<6?4:3;});
 LEVELS[0].float={1:5,5:3,10:1};LEVELS[1].float={1:4,5:2,10:1};
 const BREAK={200:[100,50,20,20,10],100:[50,20,20,10],50:[20,20,10],20:[10,5,5],10:[5,5],5:[1,1,1,1,1],1:[0.5,0.5]};
 const PEOPLE=[['الحاج محمود','👳🏽'],['أم أحمد','🧕🏽'],['الأستاذة منى','🧕🏽'],['مدام نيفين','🧕🏽'],['كابتن شريف','🧔🏽'],['الحاجة سعاد','🧕🏾'],['الدكتور حسام','👨🏽‍⚕️'],['عم عبده','👨🏽'],['شيماء','👩🏽'],['المهندس كريم','👷🏽'],['طالبة جامعة','🧕🏽']];
@@ -267,19 +274,33 @@ const li=n=>n.startsWith('ال')?'لل'+n.slice(2):'ل'+n;
 
 /* ---------- save ---------- */
 const SAVE_KEY='yalla-elogra-v1';
-let save={stars:{},station:0};
+let save={stars:{}};
 try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(s)save=Object.assign(save,s);}catch(e){}
 const persist=()=>{try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}};
 
 /* ======================================================
-   AUDIO: synthesized Egyptian radio + sfx
+   AUDIO: the microbus speaker (one song per level, always on, heavy bass) + sfx
    ====================================================== */
-const STATIONS=[
- {name:'مهرجان الأجرة',fm:'104.2',bpm:128,root:293.66,scale:[0,1,4,5,7,8,10],style:'mah',seed:11},
- {name:'شعبي ع الدائري',fm:'98.8',bpm:104,root:293.66,scale:[0,1.5,3,5,7,8,10],style:'sha',seed:23},
- {name:'طرب الأسطى',fm:'91.5',bpm:84,root:261.63,scale:[0,2,3.5,5,7,9,10.5],style:'tar',seed:5},
+const HIJAZ=[0,1,4,5,7,8,10],BAYATI=[0,1.5,3,5,7,8,10],RAST=[0,2,3.5,5,7,9,10.5];
+const SYNTH=[
+ {name:'مهرجان الموقف',bpm:132,root:293.66,scale:HIJAZ,style:'mah',seed:41},
+ {name:'مهرجان رمسيس',bpm:128,root:293.66,scale:HIJAZ,style:'mah',seed:11},
+ {name:'شعبي ع الدائري',bpm:104,root:293.66,scale:BAYATI,style:'sha',seed:23},
+ {name:'طرب الأسطى',bpm:84,root:261.63,scale:RAST,style:'tar',seed:5},
+ {name:'مهرجان الكلاكس',bpm:136,root:277.18,scale:HIJAZ,style:'mah',seed:77},
+ {name:'شعبي المحور',bpm:110,root:311.13,scale:BAYATI,style:'sha',seed:52},
+ {name:'مهرجان التوكتوك',bpm:124,root:261.63,scale:HIJAZ,style:'mah',seed:93},
+ {name:'شعبي الفكة',bpm:98,root:329.63,scale:BAYATI,style:'sha',seed:64},
+ {name:'مهرجان آخر الخط',bpm:140,root:293.66,scale:HIJAZ,style:'mah',seed:128},
 ];
-const A={ctx:null,st:save.station,step:0,loop:0,next:0,prevF:0,custom:null,customName:''};
+const SONG=(n,name)=>({file:`songs/song${n}.mp3`,name});
+const MENU_TRACK={synth:SYNTH[0]};
+// the user's four songs sit on levels 1, 4, 7 and 10; original tracks fill the rest so no two levels share one
+[SONG(1,'Tabeeb Garrah'),{synth:SYNTH[1]},{synth:SYNTH[2]},SONG(2,'Ana Msh Dollar'),{synth:SYNTH[3]},{synth:SYNTH[4]},
+ SONG(3,'Halya Bel Swak'),{synth:SYNTH[5]},{synth:SYNTH[6]},SONG(4,'Khamorgia'),{synth:SYNTH[7]},{synth:SYNTH[8]}]
+ .forEach((t,i)=>{LEVELS[i].track=t;});
+const trackName=t=>t.file?t.name:t.synth.name;
+const A={ctx:null,synth:null,step:0,loop:0,next:0,prevF:0,el:null,src:'',name:'',want:MENU_TRACK};
 function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function makeTrack(st){
   const r=mulberry(st.seed);
@@ -295,7 +316,7 @@ function makeTrack(st){
   };
   return {A:sec(),B:sec()};
 }
-const TRACKS=STATIONS.map(makeTrack);
+SYNTH.forEach(s=>{s.track=makeTrack(s);});
 function freqOf(st,deg){const oct=Math.floor(deg/7),k=Math.round(((deg%7)+7)%7);return st.root*Math.pow(2,(st.scale[Math.min(6,k)]+12*oct)/12);}
 
 function audioInit(){
@@ -304,9 +325,14 @@ function audioInit(){
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
   const C=new AC();A.ctx=C;
   A.master=C.createGain();A.master.gain.value=0.9;A.master.connect(C.destination);
-  const hp=C.createBiquadFilter();hp.type='highpass';hp.frequency.value=90;
+  // microbus speaker: boomy low end, then squashed loud
+  const shelf=C.createBiquadFilter();shelf.type='lowshelf';shelf.frequency.value=110;shelf.gain.value=11;
+  const thump=C.createBiquadFilter();thump.type='peaking';thump.frequency.value=60;thump.Q.value=1;thump.gain.value=5;
+  const comp=C.createDynamicsCompressor();comp.threshold.value=-20;comp.ratio.value=4;comp.attack.value=0.005;comp.release.value=0.2;
+  A.speaker=C.createGain();A.speaker.gain.value=0.85;A.speaker.connect(shelf);shelf.connect(thump);thump.connect(comp);comp.connect(A.master);
+  const hp=C.createBiquadFilter();hp.type='highpass';hp.frequency.value=35;
   const lp=C.createBiquadFilter();lp.type='lowpass';lp.frequency.value=7000;
-  A.musicIn=C.createGain();A.musicIn.gain.value=0.6;A.musicIn.connect(hp);hp.connect(lp);lp.connect(A.master);
+  A.musicIn=C.createGain();A.musicIn.gain.value=0.6;A.musicIn.connect(hp);hp.connect(lp);lp.connect(A.speaker);
   A.sfx=C.createGain();A.sfx.gain.value=0.8;A.sfx.connect(A.master);
   const nb=C.createBuffer(1,C.sampleRate,C.sampleRate),ch=nb.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;A.noise=nb;
   // engine + road
@@ -317,7 +343,7 @@ function audioInit(){
   A.roadG=C.createGain();A.roadG.gain.value=0;rn.connect(rf);rf.connect(A.roadG);A.roadG.connect(A.master);rn.start();
   A.next=C.currentTime+0.1;setInterval(schedule,25);
   C.resume();
-  setStation(A.st,true);
+  playTrack(A.want);
 }
 function noiseSrc(t,dur){const s=A.ctx.createBufferSource();s.buffer=A.noise;s.start(t,Math.random()*0.5,dur+0.05);return s;}
 function gEnv(t,peak,a,d,dest){const g=A.ctx.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+d);g.connect(dest);return g;}
@@ -360,10 +386,10 @@ function stab(st,t){[0,4,7].forEach(s=>{const f=st.root*Math.pow(2,s/12);const o
 
 function schedule(){
   const C=A.ctx;if(!C)return;
-  const live=A.st>=0&&A.st<STATIONS.length&&C.state==='running';
-  if(!live){A.next=C.currentTime+0.05;return;}
-  const st=STATIONS[A.st],sd=60/st.bpm/4;
-  while(A.next<C.currentTime+0.12){playStep(st,TRACKS[A.st],A.step,A.next,sd);A.next+=sd;A.step++;if(A.step>=64){A.step=0;A.loop++;}}
+  const st=A.synth;
+  if(!st||C.state!=='running'){A.next=C.currentTime+0.05;return;}
+  const sd=60/st.bpm/4;
+  while(A.next<C.currentTime+0.12){playStep(st,st.track,A.step,A.next,sd);A.next+=sd;A.step++;if(A.step>=64){A.step=0;A.loop++;}}
 }
 function playStep(st,tr,i,t,sd){
   const s=i%16,bar=Math.floor(i/16),sec=(A.loop%4===2)?tr.B:tr.A,note=sec[i];
@@ -411,22 +437,28 @@ function sfx(name){
   else if(name==='door'){const n=noiseSrc(t,0.5),f=C.createBiquadFilter();f.type='bandpass';f.Q.value=1.2;f.frequency.setValueAtTime(500,t);f.frequency.exponentialRampToValueAtTime(2200,t+0.4);n.connect(f);f.connect(gEnv(t,0.18,0.05,0.4,D));tone('sine',95,t+0.45,0.18,0.45,D,50);}
   else if(name==='crackle'){const n=noiseSrc(t,0.3),f=filt('bandpass',1800,0.5);n.connect(f);f.connect(gEnv(t,0.14,0.01,0.25,D));}
 }
-function setStation(i,silent){
-  const total=STATIONS.length+(A.custom?1:0);
-  if(i>=total)i=-1;
-  A.st=i;save.station=i<STATIONS.length?i:0;persist();
+/* there is no radio to switch: whatever track is wanted plays. Before the first tap it is only remembered,
+   because browsers start sound only from a tap. Song files go through the same bass-heavy speaker chain. */
+function playTrack(t){
+  A.want=t;A.name=trackName(t);
+  if(!A.ctx)return;
   A.step=0;A.loop=0;A.prevF=0;
-  if(A.custom){if(i===STATIONS.length){A.custom.play().catch(()=>{});}else A.custom.pause();}
-  if(!silent)sfx('crackle');
+  if(t.file){
+    A.synth=null;
+    if(!A.el){
+      A.el=new Audio();A.el.loop=true;A.el.setAttribute('playsinline','');
+      try{A.ctx.createMediaElementSource(A.el).connect(A.speaker);}catch(e){}
+      A.el.addEventListener('error',()=>{if(A.want.file)playTrack(MENU_TRACK);});
+    }
+    if(A.src!==t.file){A.el.src=t.file;A.src=t.file;}
+    A.el.play().catch(()=>{});
+  }else{
+    if(A.el)A.el.pause();
+    A.synth=t.synth;
+  }
 }
-function nextStation(){audioInit();const total=STATIONS.length+(A.custom?1:0);let i=A.st+1;if(i>=total)i=-1;setStation(i);}
-function stationLabel(){if(A.st<0)return'OFF';if(A.st===STATIONS.length)return A.customName||'أغنيتك';return STATIONS[A.st].name;}
-/* a real song (the level's track, or one picked from the phone) plays through the "custom" radio slot */
-function playSong(src,name){
-  if(!A.custom){A.custom=new Audio();A.custom.loop=true;A.custom.setAttribute('playsinline','');A.custom.addEventListener('error',()=>{if(A.st===STATIONS.length)setStation(0,true);});}
-  if(A.customSrc!==src){A.custom.src=src;A.customSrc=src;}
-  A.customName=name;setStation(STATIONS.length);
-}
+function musicPause(){if(A.ctx)A.ctx.suspend();if(A.el)A.el.pause();}
+function musicResume(){if(A.ctx)A.ctx.resume();if(A.el&&A.want.file)A.el.play().catch(()=>{});}
 
 /* ======================================================
    SCENE (canvas): the view from the bench behind the driver
@@ -622,10 +654,10 @@ function drawInterior(tod){
   for(const f of S.fur){cx.strokeStyle=f[4];cx.lineWidth=1.3;cx.beginPath();cx.moveTo(f[0],f[1]);cx.lineTo(f[0]+f[2],f[1]-f[3]);cx.stroke();}
   // radio
   const R=S.radio;rrect(R.x,R.y,R.w,R.h,3);cx.fillStyle='#0b0b0c';cx.fill();
-  rrect(R.x+4,R.y+3,56,R.h-6,2);cx.fillStyle=A.st<0?'#0e1a12':'#0c2a14';cx.fill();
-  cx.save();rrect(R.x+4,R.y+3,56,R.h-6,2);cx.clip();cx.fillStyle=A.st<0?'#2e5a3a':'#7dff9b';cx.font='11px Lalezar, sans-serif';cx.textBaseline='middle';cx.direction='rtl';cx.textAlign='right';
-  const lbl=stationLabel(),tw=cx.measureText(lbl).width;const off=tw>50?((S.T*18)%(tw+30))-10:0;cx.fillText(lbl,R.x+58+off,R.y+R.h/2+1);cx.restore();
-  for(let i=0;i<5;i++){const hh=A.st<0?1:2+Math.abs(Math.sin(S.T*(6+i*1.7)+i))*9;cx.fillStyle='#f4b63f';cx.fillRect(R.x+64+i*3.6,R.y+R.h-3-hh,2.4,hh);}
+  rrect(R.x+4,R.y+3,56,R.h-6,2);cx.fillStyle='#0c2a14';cx.fill();
+  cx.save();rrect(R.x+4,R.y+3,56,R.h-6,2);cx.clip();cx.fillStyle='#7dff9b';cx.font='11px Lalezar, sans-serif';cx.textBaseline='middle';cx.direction='rtl';cx.textAlign='right';
+  const lbl=A.name,tw=cx.measureText(lbl).width;const off=tw>50?((S.T*18)%(tw+30))-10:0;cx.fillText(lbl,R.x+58+off,R.y+R.h/2+1);cx.restore();
+  for(let i=0;i<5;i++){const hh=2+Math.abs(Math.sin(S.T*(6+i*1.7)+i))*9;cx.fillStyle='#f4b63f';cx.fillRect(R.x+64+i*3.6,R.y+R.h-3-hh,2.4,hh);}
   // tissue box
   rrect(320,141,44,13,2);cx.fillStyle='#e86d9a';cx.fill();cx.fillStyle='#fff';cx.beginPath();cx.moveTo(336,142);cx.quadraticCurveTo(342,131,348,142);cx.fill();
 }
@@ -696,8 +728,7 @@ function draw(){
 }
 cv.addEventListener('click',e=>{
   const r=cv.getBoundingClientRect(),d=cv.width/r.width;const x=((e.clientX-r.left)*d-view.ox)/view.s,y=((e.clientY-r.top)*d-view.oy)/view.s;
-  const R=S.radio;if(x>R.x-8&&x<R.x+R.w+8&&y>R.y-8&&y<R.y+R.h+8){nextStation();}
-  else if(x<190&&y>140){audioInit();sfx('horn');}
+  if(x<190&&y>140){audioInit();sfx('horn');}
 });
 
 /* ======================================================
@@ -708,7 +739,7 @@ const panel=$('#panel');
 
 function startLevel(i){
   audioInit();
-  G.li=i;G.lv=LEVELS[i];resetFloat();if(A.st>=0)playSong(G.lv.song[0],G.lv.song[1]);G.stopIdx=0;G.score=0;G.strikes=0;G.onboard=[];G.token++;G.running=true;G.paused=false;G.phase='stop';G.mode='idle';G.peekUntil=0;
+  G.li=i;G.lv=LEVELS[i];resetFloat();playTrack(G.lv.track);G.stopIdx=0;G.score=0;G.strikes=0;G.onboard=[];G.token++;G.running=true;G.paused=false;G.phase='stop';G.mode='idle';G.peekUntil=0;
   S.crowd={mode:'come',n:ri(3,6),seed:ri(0,5),z:2.4};
   closeOv();hud();renderFares();enterStop();
 }
@@ -946,7 +977,7 @@ function renderRelax(ok,total){
   panel.innerHTML=`
   <div class="wait"><b>${ok?'مظبوط يا كابتن':'الحساب باظ'}</b><span>${ok?'الأسطى أخد الأجرة. اسمع المهرجان لحد المحطة الجاية.':`المجموع الصح كان ${fmt(total)} جنيه.`}</span></div>
   ${onboardChips()}
-  <div class="btns"><button class="go alt" data-act="horn">كلاكس</button><button class="go alt" data-act="radio">غيّر المحطة</button></div>`;
+  <div class="btns"><button class="go alt" data-act="horn">اضرب كلاكس</button></div>`;
 }
 
 panel.addEventListener('click',e=>{
@@ -962,7 +993,6 @@ panel.addEventListener('click',e=>{
   else if(act==='kpdel'&&G.mode==='driver'){G.kp=G.kp.endsWith('.5')?G.kp.slice(0,-2):G.kp.slice(0,-1);updateKp();}
   else if(act==='pay')payDriver();
   else if(act==='horn')sfx('horn');
-  else if(act==='radio')nextStation();
 });
 $('#fares').addEventListener('click',e=>{if(e.target.closest('[data-act="peek"]')&&G.running){G.score=Math.max(0,G.score-5);popAt('-5',true);hud();G.peekUntil=performance.now()+3500;renderFares();setTimeout(renderFares,3600);}});
 $('#alight').addEventListener('click',()=>{audioInit();G.alightAsked=true;$('#alight').hidden=true;G.score+=5;popAt('+5');hud();driverSay('حاضر يا باشا');});
@@ -970,11 +1000,13 @@ document.addEventListener('keydown',e=>{
   if(G.mode==='driver'){if(/^[0-9]$/.test(e.key)){const b=panel.querySelector(`[data-k="${e.key}"]`);b&&b.click();}else if(e.key==='Backspace'){panel.querySelector('[data-act="kpdel"]').click();}else if(e.key==='Enter'){payDriver();}else if(e.key==='.'){const b=panel.querySelector('[data-k=".5"]');b&&b.click();}}
   else if(G.mode==='change'&&e.key==='Enter')giveChange();
 });
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.running)openMenu(true);if(A.ctx)A.ctx.suspend();if(A.custom)A.custom.pause();}else if(A.ctx&&!G.paused)A.ctx.resume();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.running)openMenu(true);musicPause();}else if(!G.paused)musicResume();});
+// sound can only start from a tap, so the very first tap anywhere starts the song
+document.addEventListener('pointerdown',()=>audioInit(),{once:true,capture:true});
 
 /* ---------- overlays ---------- */
 const ov=$('#ov');
-function closeOv(){ov.hidden=true;ov.innerHTML='';G.paused=false;if(A.ctx)A.ctx.resume();if(A.custom&&A.st===STATIONS.length)A.custom.play().catch(()=>{});}
+function closeOv(){ov.hidden=true;ov.innerHTML='';G.paused=false;musicResume();}
 function starsHTML(n){return [1,2,3].map(i=>`<span class="${i<=n?'':'off'}">★</span>`).join('');}
 function openMenu(paused){
   G.paused=!!(paused&&G.running);
@@ -987,14 +1019,11 @@ function openMenu(paused){
     <div class="levels">${LEVELS.map((l,i)=>`<button class="lv" data-o="intro" data-l="${i}" ${unlocked(i)?'':'disabled'}>
       <span class="n">المشوار ${i+1}</span><span class="t">${l.route}</span><span class="d">${l.stops.length-1} محطات · ${l.board?'التعريفة قدامك':'التعريفة مستخبية'}</span><span class="s">${starsHTML(save.stars[i]||0)}</span></button>`).join('')}</div>
     <div class="settings">
-      <label for="selStation">راديو الأسطى<select id="selStation">${STATIONS.map((s,i)=>`<option value="${i}" ${A.st===i?'selected':''}>${s.name} · FM ${s.fm}</option>`).join('')}${A.custom?`<option value="${STATIONS.length}" ${A.st===STATIONS.length?'selected':''}>أغنيتك: ${A.customName}</option>`:''}<option value="-1" ${A.st<0?'selected':''}>اقفل الراديو</option></select></label>
-      <div class="set">وريني الحساب في كل المشاوير<button class="toggle" id="tglHelp" aria-pressed="${!!save.alwaysHelp}">${save.alwaysHelp?'شغال':'مقفول'}</button></div>
-      <div class="set">شغّل أغنية من موبايلك<span class="file-btn">اختار ملف<input type="file" id="fileSong" accept="audio/*"></span></div>
-    </div>
-    <p class="note">على الآيفون: لو مش سامع الأغاني، شيل الموبايل من الوضع الصامت وعلّي الصوت. دوس على الراديو اللي في التابلوه عشان تغيّر المحطة، وعلى الدريكسيون عشان تضرب كلاكس.</p>
+      <div class="set">وريني الحساب في كل المشاوير<button class="toggle" id="tglHelp" aria-pressed="${!!save.alwaysHelp}">${save.alwaysHelp?'شغال':'مقفول'}</button></div>    </div>
+    <p class="note">على الآيفون: لو مش سامع الأغاني، شيل الموبايل من الوضع الصامت وعلّي الصوت. كل مشوار ليه أغنيته. دوس على الدريكسيون عشان تضرب كلاكس.</p>
   </div>`;
   ov.hidden=false;
-  if(G.paused){if(A.ctx)A.ctx.suspend();if(A.custom)A.custom.pause();}
+  if(G.paused)musicPause();else if(!G.running)playTrack(MENU_TRACK);
 }
 function showHowto(){
   save.seenHowto=true;persist();
@@ -1020,7 +1049,7 @@ function showIntro(i){
     <div class="tbl">${l.stops.slice(1).map(s=>`<span>${s[0]}<b>${fmt(s[1])} ج</b></span>`).join('')}</div>
     <div class="row"><span class="row-label">الفكة اللي الأسطى هيديهالك:</span><div class="money">${Object.keys(l.float).sort((a,b)=>a-b).map(k=>money(+k,'span','',l.float[k])).join('')}</div></div>
     <p class="row-label">قدامك ${l.time} ثانية بين كل محطة والتانية. معاك ${l.lives} فرص (الخرز الأزرق فوق). ${l.help===2?'المشوار ده هيوريك الحساب كله.':l.help===1?'هيوريك الأجرة، وإنت تحسب الباقي.':'من غير مساعدة: الحساب كله عليك.'}</p>
-    <p class="row-label">الأغنية: ${l.song[1]}</p>
+    <p class="row-label">الأغنية: ${trackName(l.track)}</p>
     <div class="btns"><button class="go alt" data-o="menu">رجوع</button><button class="go" data-o="start" data-l="${i}">اركب يا كابتن</button></div>
   </div></div>`;ov.hidden=false;
 }
@@ -1053,13 +1082,6 @@ ov.addEventListener('click',e=>{
     else if(o==='menu'){G.token++;G.running=false;G.mode='idle';G.lv=null;hud();renderFares();panelWait('يلا الأجرة','اختار مشوار من القائمة');openMenu(false);}
   }
   if(e.target.id==='tglHelp'){save.alwaysHelp=!save.alwaysHelp;persist();e.target.setAttribute('aria-pressed',save.alwaysHelp);e.target.textContent=save.alwaysHelp?'شغال':'مقفول';}
-});
-ov.addEventListener('change',e=>{
-  if(e.target.id==='selStation'){audioInit();setStation(+e.target.value);}
-  if(e.target.id==='fileSong'&&e.target.files[0]){
-    audioInit();const f=e.target.files[0];
-    playSong(URL.createObjectURL(f),f.name.replace(/\.[^.]+$/,'').slice(0,24));openMenu(G.paused);
-  }
 });
 $('#btnMenu').addEventListener('click',()=>{audioInit();openMenu(true);});
 
