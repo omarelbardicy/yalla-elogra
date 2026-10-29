@@ -256,12 +256,14 @@ const LEVELS=[
   stops:[['موقف المنيب',0],['الحوامدية',17.5],['البدرشين',22.5],['العياط',32.5],['الفيوم',47.5]],pax:[3,4],group:4,mixed:true,bills:[50,100,200],half:true,time:23,board:false,tod:0,float:{0.5:1,1:1,5:1,10:1}},
  {route:'عبود ← المنصورة',tip:'أربع ركاب في كل محطة ومجموعات كبيرة. الحساب للأسطى هيبقى أرقام كبيرة.',
   stops:[['موقف عبود',0],['قليوب',15],['بنها',35],['ميت غمر',55],['المنصورة',75]],pax:[4,4],group:4,mixed:true,bills:[50,100,200],half:false,time:24,board:false,tod:1,float:{5:1,10:1}},
- {route:'الترجمان ← شرم الشيخ',tip:'آخر مشوار وأصعبهم: أسعار سفر، ميتينات بس تقريباً، وفكة قليلة جداً. لو خلصته تبقى أسطى بجد.',
+ {route:'الترجمان ← شرم الشيخ',tip:'أسعار سفر، ميتينات بس تقريباً، وفكة قليلة جداً. ركّز في كل جنيه.',
   stops:[['الترجمان',0],['السويس',120],['رأس سدر',180],['الطور',250],['شرم الشيخ',320]],pax:[4,4],group:4,mixed:true,bills:[100,200],half:false,time:25,board:false,tod:3,float:{5:1,10:1,20:1}},
+ {route:'التحرير ← العاصمة الإدارية',tip:'آخر مشوار وأصعبهم: أنصاص وأسعار كبيرة وأربع ركاب في كل محطة. لو خلصته تبقى أسطى بجد.',
+  stops:[['التحرير',0],['مدينة نصر',22.5],['التجمع الخامس',37.5],['مدينتي',47.5],['العاصمة الإدارية',62.5]],pax:[4,4],group:4,mixed:true,bills:[50,100,200],half:true,time:25,board:false,tod:2,float:{0.5:1,1:1,5:1,10:1}},
 ];
 /* gentler curve: more time, extra lives early on, and on-screen arithmetic help that fades out
    help 2 = fare and change shown, 1 = fare only, 0 = none */
-LEVELS.forEach((l,i)=>{l.time+=[10,10,9,8,7,6,6,5,5,4,4,3][i];l.help=i<2?2:i<5?1:0;l.lives=i<3?5:i<6?4:3;});
+LEVELS.forEach((l,i)=>{l.time+=[10,10,9,8,7,6,6,5,5,4,4,3,3][i];l.help=i<2?2:i<5?1:0;l.lives=i<3?5:i<6?4:3;});
 LEVELS[0].float={1:5,5:3,10:1};LEVELS[1].float={1:4,5:2,10:1};
 const BREAK={200:[100,50,20,20,10],100:[50,20,20,10],50:[20,20,10],20:[10,5,5],10:[5,5],5:[1,1,1,1,1],1:[0.5,0.5]};
 const PEOPLE=[['الحاج محمود','👳🏽'],['أم أحمد','🧕🏽'],['الأستاذة منى','🧕🏽'],['مدام نيفين','🧕🏽'],['كابتن شريف','🧔🏽'],['الحاجة سعاد','🧕🏾'],['الدكتور حسام','👨🏽‍⚕️'],['عم عبده','👨🏽'],['شيماء','👩🏽'],['المهندس كريم','👷🏽'],['طالبة جامعة','🧕🏽']];
@@ -295,8 +297,11 @@ const SYNTH=[
 ];
 const SONG=(n,name)=>({file:`songs/song${n}.mp3`,name});
 const MENU_TRACK={synth:SYNTH[0]};
-// the user's four songs take turns, three levels each, so the next level always plays a different one
-const SONGS=[SONG(1,'Tabeeb Garrah'),SONG(2,'Ana Msh Dollar'),SONG(3,'Halya Bel Swak'),SONG(4,'Khamorgia')];
+// one of the user's songs per level, in this order; if levels ever outnumber songs they wrap around
+const SONGS=[SONG(1,'Tabeeb Garrah'),SONG(2,'Ana Msh Dollar'),SONG(3,'Halya Bel Swak'),SONG(4,'Khamorgia'),
+ SONG(5,'Hamo El Morshedy - El Wala'),SONG(6,'Wegz - El Wad'),SONG(7,'Essam Sasa - Nos Seito Meny'),SONG(8,'DJ Snake - Cairo Express'),
+ SONG(9,'Twwlyt - La Baly Fe Demaghy'),SONG(10,'Hamo El Morshedy - Arkab El Dabbaba'),SONG(11,'Wegz - El Haz'),
+ SONG(12,'Essam Sasa - Kolaha Mestanzara'),SONG(13,'Twwlyt - Wala 3ash Wala Kan')];
 LEVELS.forEach((l,i)=>{l.track=SONGS[i%SONGS.length];});
 const trackName=t=>t.file?t.name:t.synth.name;
 const A={ctx:null,synth:null,step:0,loop:0,next:0,prevF:0,el:null,src:'',name:'',want:MENU_TRACK};
