@@ -196,6 +196,21 @@ button:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
 .stars .off{color:#4a2a30}
 @media (prefers-reduced-motion:reduce){.alight{animation:none}.pop{animation-duration:.01s}.panel.shake{animation:none}}
 @media (max-height:640px){.logo{font-size:52px}.bubble{font-size:15px}.pouch .bill{height:34px}.pouch .coin{width:36px;height:36px}.keypad button{height:38px}}
+/* guided first ride */
+.tour{position:fixed;inset:0;z-index:1000;pointer-events:none}
+.tour[hidden]{display:none}
+.tour .tb{position:fixed;background:rgba(10,2,5,.72);pointer-events:auto;transition:all .25s ease}
+.tour .tb.cover{background:transparent}
+.tour .th{position:fixed;border:3px solid var(--mustard);border-radius:12px;pointer-events:none;transition:all .25s ease;box-shadow:0 0 18px rgba(244,182,63,.55)}
+.tour.act .th{animation:tourPulse 1s ease-in-out infinite}
+@keyframes tourPulse{50%{box-shadow:0 0 0 7px rgba(244,182,63,.35),0 0 26px rgba(244,182,63,.8)}}
+.tour .tt{position:fixed;pointer-events:auto;box-sizing:border-box;background:var(--paper,#fff7e6);color:var(--ink,#1a0c08);border-radius:14px;padding:12px 14px 10px;box-shadow:0 10px 30px rgba(0,0,0,.5);border:2px solid var(--mustard);transition:top .25s ease,left .25s ease;font-size:15px;line-height:1.6}
+.tour .tx b{color:#9b1c2e}
+.tour .tf{display:flex;align-items:center;gap:8px;margin-top:8px}
+.tour .tn{flex:1;text-align:center;font-size:11px;opacity:.6}
+.tour .skip{background:none;border:0;color:inherit;opacity:.65;font:inherit;font-size:12px;text-decoration:underline;padding:4px}
+.tour .nx{width:auto;min-width:96px;padding:6px 16px;margin:0}
+.tour .nx[hidden]{display:none}
 </style>
 
 </head>
@@ -904,7 +919,7 @@ function tick(dt){
     G.phaseT+=dt;
     if(G.phaseT>1.9){G.phase='drive';G.segT=0;G.segDur=G.lv.time;G.warned=false;if(S.crowd)S.crowd.mode='leave';S.target=1;nextPax();}
   }else if(G.phase==='drive'){
-    G.segT+=dt;const p=G.segT/G.segDur,left=G.segDur-G.segT;
+    if(!G.tut)G.segT+=dt;const p=G.segT/G.segDur,left=G.segDur-G.segT;
     S.target=p>0.86?0.1:1;
     const nxt=G.stopIdx+1,lastI=G.lv.stops.length-1;
     if(!G.alightAsked&&p>0.5&&nxt<lastI&&G.onboard.some(o=>o.dest===nxt)){const b=$('#alight');if(b.hidden){b.hidden=false;b.textContent=`على جنب يا أسطى! (${G.lv.stops[nxt][0]})`;}}
@@ -1100,7 +1115,7 @@ document.addEventListener('keydown',e=>{
   if(G.mode==='driver'){if(/^[0-9]$/.test(e.key)){const b=panel.querySelector(`[data-k="${e.key}"]`);b&&b.click();}else if(e.key==='Backspace'){panel.querySelector('[data-act="kpdel"]').click();}else if(e.key==='Enter'){payDriver();}else if(e.key==='.'){const b=panel.querySelector('[data-k=".5"]');b&&b.click();}}
   else if(G.mode==='change'&&e.key==='Enter')giveChange();
 });
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.running)openMenu(true);musicPause();}else if(!G.paused)musicResume();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.running&&!G.tut)openMenu(true);musicPause();}else if(!G.paused)musicResume();});
 // sound can only start from a tap, so the very first tap anywhere starts the song
 document.addEventListener('pointerdown',()=>audioInit(),{once:true,capture:true});
 
@@ -1174,7 +1189,7 @@ function showGameOver(){
 ov.addEventListener('click',e=>{
   const b=e.target.closest('[data-o]');if(b&&!b.disabled){audioInit();const o=b.dataset.o;
     if(o==='resume')closeOv();
-    else if(o==='howto')showHowto();
+    else if(o==='howto')startTour();
     else if(o==='intro'){G.token++;G.running=false;G.mode='idle';showIntro(+b.dataset.l);}
     else if(o==='start')startLevel(+b.dataset.l);
     else if(o==='retry')showIntro(G.li);
@@ -1186,7 +1201,85 @@ ov.addEventListener('click',e=>{
 $('#btnMenu').addEventListener('click',()=>{audioInit();openMenu(true);});
 
 /* ---------- boot ---------- */
-resize();hud();renderFares();panelWait('يلا الأجرة','اختار مشوار من القائمة');if(save.seenHowto)openMenu(false);else showHowto();
+/* ---------- guided first ride ("إزاي تلعب؟") ----------
+   A real practice ride with one fixed passenger and the clock stopped. A spotlight shows the one thing to
+   look at or tap, and the bubble says what to do; action steps only move on once the player has done it. */
+const TOUR=[
+ {txt:'أهلاً يا كابتن! 👋<br>هنعمل مع بعض <b>مشوار تجريبي</b> خطوة بخطوة.<br>الوقت واقف، وماتقلقش من الغلط.',btn:'يلا بينا'},
+ {sel:'#stage',txt:'ده الميكروباص. إنت قاعد <b>ورا السوّاق</b>، وشغلتك تلم الأجرة من الركاب وتديها للأسطى.'},
+ {sel:'#route',txt:'دي <b>المحطات</b>. إحنا دلوقتي في رمسيس ورايحين العتبة.'},
+ {sel:'#fares',txt:'دي <b>التعريفة</b>: سعر كل محطة للفرد. <b>الأزبكية بـ ٤ جنيه</b>.'},
+ {txt:'استنى... فيه راكب طالع 🚶',until:()=>G.mode==='change'},
+ {sel:'.panel .pax',txt:'الراكب بيقولك رايح فين وكام واحد: <b>«واحد الأزبكية»</b>.<br>يعني الأجرة = ١ × ٤ = <b>٤ جنيه</b>.'},
+ {sel:()=>panel.querySelector('.money')&&panel.querySelector('.money').closest('.row'),txt:'إدّاك <b>١٠ جنيه</b>.<br>يبقى الباقي = ١٠ − ٤ = <b>٦ جنيه</b>.'},
+ {sel:'#pouch',txt:'دي <b>الفكة اللي في جيبك</b>. هنرجّع الـ ٦ جنيه: <b>خمسة + جنيه</b>.'},
+ {sel:'#pouch .v5',txt:'👆 <b>دوس على الخمسة جنيه</b>.',act:true,until:()=>G.tray.some(v=>v===5)},
+ {sel:'#pouch .v1',txt:'👆 ودلوقتي <b>دوس على الجنيه</b>، كده يبقوا ٦.',act:true,until:()=>sum(G.tray)>=6},
+ {sel:'.panel .btns.small',txt:'لو الفكة اللي معاك مش مكفية: اسأل الراكب <b>«معاك فكة؟»</b> أو خلّي الأسطى <b>«يفكّ»</b> لك ورقة كبيرة.',
+  pre:()=>{if(!eq(sum(G.tray),6)){wAdd(G.tray);G.tray=[5,1];G.wallet[5]--;G.wallet[1]--;updateTray();}}},
+ {sel:'#giveBtn',txt:'👆 تمام! <b>دوس «خد الباقي»</b> عشان تدي الراكب باقيه.',act:true,until:()=>G.mode!=='change'},
+ {txt:'الراكب خد باقيه 👍',until:()=>G.mode==='driver'},
+ {sel:'.panel .log',txt:'كل الركاب دفعوا، و<b>الأسطى مد إيده</b>. لازم تقوله <b>مجموع الأجرة</b> اللي لميتها: <b>٤ جنيه</b>.'},
+ {sel:'.keypad [data-k="4"]',txt:'👆 <b>اكتب ٤</b>.',act:true,until:()=>G.kp.startsWith('4'),post:()=>{G.kp='4';updateKp();}},
+ {sel:'[data-act="pay"]',txt:'👆 <b>دوس «خد يا أسطى»</b>.',act:true,until:()=>G.mode!=='driver'},
+ {sel:'#stage',txt:'الشريط <b>الأخضر</b> اللي تحت الصورة ده هو الوقت لحد المحطة الجاية. في اللعب بجد لازم تخلّص الحساب <b>قبل ما يخلص</b>.'},
+ {sel:'#strikes',txt:'ده <b>الخرز الأزرق</b>: فرصك. كل غلطة في الحساب بتاخد واحدة.'},
+ {sel:'#btnMenu',txt:'ومن هنا <b>القائمة</b>: تختار المشوار، ولو نسيت دوس <b>«إزاي تلعب؟»</b> وهنعيد الجولة دي.'},
+ {txt:'برافو يا كابتن! 🎉<br>ساعات هيظهر زرار <b>«على جنب يا أسطى»</b>: دوس عليه لما راكب عايز ينزل.<br>يلا نبدأ المشوار الأول بجد!',btn:'اركب يا كابتن',end:true},
+];
+const T={i:-1,el:null,raf:0,wait:0};
+function startTour(){
+  startLevel(0);G.tut=true;
+  const p=makePax(0,new Set());
+  Object.assign(p,{parts:[{n:1,dest:2}],fare:4,paid:[10],change:6,text:'يا ريس، واحد الأزبكية'});
+  G.queue=[p];G.batch=[p];
+  if(!T.el){
+    T.el=document.createElement('div');T.el.className='tour';
+    T.el.innerHTML='<div class="tb"></div><div class="tb"></div><div class="tb"></div><div class="tb"></div><div class="tb cover"></div><div class="th"></div><div class="tt"><div class="tx"></div><div class="tf"><button class="skip">تخطّي</button><span class="tn"></span><button class="go nx"></button></div></div>';
+    document.body.appendChild(T.el);
+    T.el.querySelector('.skip').onclick=()=>endTour(false);
+    T.el.querySelector('.nx').onclick=()=>{const s=TOUR[T.i];if(s&&s.end)endTour(true);else tourGo(T.i+1);};
+  }
+  T.el.hidden=false;tourGo(0);
+  cancelAnimationFrame(T.raf);T.raf=requestAnimationFrame(tourFrame);
+}
+function tourTarget(s){if(!s||!s.sel)return null;return typeof s.sel==='function'?s.sel():document.querySelector(s.sel);}
+function tourGo(i){
+  T.i=i;const s=TOUR[i];if(!s)return endTour(true);
+  if(s.pre)s.pre();
+  T.el.querySelector('.tx').innerHTML=s.txt;
+  const nx=T.el.querySelector('.nx');nx.hidden=!!(s.act||s.until);nx.textContent=s.btn||'التالي';
+  T.el.querySelector('.tn').textContent=`${i+1} / ${TOUR.length}`;
+  T.el.classList.toggle('act',!!s.act);T.wait=0;
+  const t=tourTarget(s);if(t)t.scrollIntoView({block:'nearest'});
+}
+function tourFrame(){
+  if(!G.tut)return;
+  const s=TOUR[T.i],t=tourTarget(s),[top,bot,lft,rgt,cover]=T.el.querySelectorAll('.tb'),hole=T.el.querySelector('.th'),tip=T.el.querySelector('.tt');
+  const W=innerWidth,H=innerHeight;
+  let r=t?t.getBoundingClientRect():null;if(r&&r.width===0)r=null;
+  if(r&&(r.top<0||r.bottom>H)){t.scrollIntoView({block:'center'});r=t.getBoundingClientRect();}   // keep the spot on screen
+  const pad=6,x=r?r.left-pad:W/2,y=r?r.top-pad:H/2,w=r?r.width+pad*2:0,h=r?r.height+pad*2:0;
+  const set=(e,a,b,c,d)=>{e.style.left=a+'px';e.style.top=b+'px';e.style.width=Math.max(0,c)+'px';e.style.height=Math.max(0,d)+'px';};
+  set(top,0,0,W,y);set(bot,0,y+h,W,H-y-h);set(lft,0,y,x,h);set(rgt,x+w,y,W-x-w,h);
+  set(cover,x,y,w,h);cover.style.display=s&&s.act?'none':'block';   // only action steps let the tap through
+  set(hole,x,y,w,h);hole.style.display=r?'block':'none';
+  const tw=Math.min(340,W-24);tip.style.width=tw+'px';
+  const th=tip.offsetHeight;
+  let tx=r?Math.min(Math.max(12,r.left+r.width/2-tw/2),W-tw-12):(W-tw)/2,ty;
+  if(!r)ty=(H-th)/2;else if(y+h+th+14<H)ty=y+h+10;else if(y-th-10>0)ty=y-th-10;else ty=Math.max(10,H-th-10);
+  tip.style.left=tx+'px';tip.style.top=ty+'px';
+  if(s&&s.until&&s.until()){if(!T.wait){T.wait=performance.now();if(s.post)s.post();}else if(performance.now()-T.wait>450)tourGo(T.i+1);}
+  T.raf=requestAnimationFrame(tourFrame);
+}
+function endTour(play){
+  G.tut=false;cancelAnimationFrame(T.raf);if(T.el)T.el.hidden=true;
+  save.seenHowto=true;save.seenTour=true;persist();
+  G.token++;G.running=false;G.mode='idle';G.lv=null;G.score=0;G.strikes=0;hud();renderFares();panelWait('يلا الأجرة','اختار مشوار من القائمة');
+  if(play)showIntro(0);else openMenu(false);
+}
+
+resize();hud();renderFares();panelWait('يلا الأجرة','اختار مشوار من القائمة');if(save.seenTour)openMenu(false);else startTour();
 requestAnimationFrame(t=>{last=t;requestAnimationFrame(loop);});
 if(document.fonts&&document.fonts.load)document.fonts.load('12px Lalezar').then(()=>{}).catch(()=>{});
 })();
