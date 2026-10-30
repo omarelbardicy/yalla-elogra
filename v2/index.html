@@ -746,38 +746,41 @@ cv.addEventListener('click',e=>{
 const G={running:false,paused:false,lv:null,li:0,stopIdx:0,phase:'idle',mode:'idle',segT:0,segDur:1,phaseT:0,queue:[],batch:[],cur:null,tray:[],kp:'',paid:false,onboard:[],score:0,strikes:0,alightAsked:false,warned:false,turnUntil:0,token:0,peekUntil:0};
 const panel=$('#panel');
 
-/* the windshield is a Flow-made driving clip per level (videos/levelN.mp4). Two players take turns and
-   crossfade near the end so the 8-second loop has no visible jump; the clip slows and stops with the bus.
+/* the windshield is one long Flow-made drive per level (videos/levelN.mp4, ~60s). The clip is tied to the
+   trip: its start is the first stop and its end the last, so it never loops or fades. It plays in slow
+   motion, leaning a little faster or slower to stay in step with the bus, and stops at every station.
    If a clip can't load, the drawn scene underneath shows instead. */
-const VIDS=[$('#vidA'),$('#vidB')];let vidCur=0,vidSrc='';
-VIDS.forEach(v=>{v.muted=true;v.addEventListener('error',()=>{if(v.getAttribute('src'))$('#stage').classList.remove('has-video');});});
+const SLOWMO=0.55;
+const VID=$('#vidA');let vidSrc='';
+VID.muted=true;VID.addEventListener('error',()=>{if(VID.getAttribute('src'))$('#stage').classList.remove('has-video');});
+$('#vidB').remove();
 function setLevelVideo(i){
   const src=`videos/level${i+1}.mp4`;if(src===vidSrc)return;vidSrc=src;
-  VIDS.forEach(v=>{v.pause();v.src=src;v.load();v.classList.remove('on');});
-  vidCur=0;VIDS[0].classList.add('on');VIDS[0].play().catch(()=>{});
+  VID.pause();VID.src=src;VID.load();VID.classList.add('on');
   $('#stage').classList.add('has-video');
 }
-function swapVideo(force){
-  const v=VIDS[vidCur],o=VIDS[1-vidCur];
-  if(!v.duration||!(force||v.currentTime>v.duration-0.7)||!o.paused)return;
-  o.currentTime=0;o.playbackRate=v.playbackRate;o.play().catch(()=>{});
-  o.classList.add('on');v.classList.remove('on');vidCur=1-vidCur;
-  setTimeout(()=>{if(VIDS[vidCur]!==v)v.pause();},700);
+function tripFraction(){
+  if(!G.running||!G.lv)return null;
+  const legs=G.lv.stops.length-1,p=G.phase==='drive'?Math.min(1,G.segT/G.segDur):0;
+  return Math.min(1,(G.stopIdx+p)/legs);
 }
-VIDS.forEach(v=>{
-  v.addEventListener('timeupdate',()=>{if(v===VIDS[vidCur]&&!v.paused)swapVideo(false);});
-  v.addEventListener('ended',()=>{if(v===VIDS[vidCur])swapVideo(true);});
-});
 function updateVideo(){
   if(!vidSrc)return;
-  const v=VIDS[vidCur];
-  if(G.paused||S.speed<0.08){if(!v.paused)v.pause();return;}
-  const rate=Math.max(0.25,Math.min(1,S.speed));
-  if(v.paused)v.play().catch(()=>{});
-  if(Math.abs(v.playbackRate-rate)>0.05)v.playbackRate=rate;
+  if(!G.running&&VID.duration&&VID.currentTime>=VID.duration-0.05)VID.currentTime=0;   // behind the menu only
+  const moving=!G.paused&&S.speed>=0.08&&!(VID.duration&&VID.currentTime>=VID.duration-0.05);
+  if(!moving){if(!VID.paused)VID.pause();return;}
+  let rate=SLOWMO*Math.max(0.3,Math.min(1,S.speed));
+  const f=tripFraction();
+  if(f!=null&&VID.duration){
+    const lag=f*VID.duration-VID.currentTime;   // seconds behind (+) or ahead (-) of where the bus is
+    rate*=Math.max(0.5,Math.min(1.8,1+lag/6));
+  }
+  rate=Math.max(0.2,Math.min(1,rate));
+  if(VID.paused)VID.play().catch(()=>{});
+  if(Math.abs(VID.playbackRate-rate)>0.03)VID.playbackRate=rate;
 }
 function startLevel(i){
-  audioInit();setLevelVideo(i);
+  audioInit();setLevelVideo(i);if(VID.readyState)VID.currentTime=0;
   G.li=i;G.lv=LEVELS[i];resetFloat();playTrack(G.lv.track);G.stopIdx=0;G.score=0;G.strikes=0;G.onboard=[];G.token++;G.running=true;G.paused=false;G.phase='stop';G.mode='idle';G.peekUntil=0;
   S.crowd={mode:'come',n:ri(3,6),seed:ri(0,5),z:2.4};
   closeOv();hud();renderFares();enterStop();
