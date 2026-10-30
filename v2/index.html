@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <link rel="apple-touch-icon" href="../icon.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}[hidden]{display:none!important}</style>
-<title>يلا الأجرة</title>
+<title>الأجرة ورا</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="يلا الأجرة">
+<meta name="apple-mobile-web-app-title" content="الأجرة ورا">
 <meta name="theme-color" content="#22050c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -221,7 +221,7 @@ button:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
 <div id="app">
   <header class="hud">
     <button class="icon-btn" id="btnMenu" aria-label="القائمة"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-    <div class="hud-route" id="hudRoute">يلا الأجرة</div>
+    <div class="hud-route" id="hudRoute">الأجرة ورا</div>
     <div class="strikes" id="strikes" aria-label="الفرص"></div>
     <div class="hud-score"><span id="score">0</span><small>نقطة</small></div>
   </header>
@@ -762,11 +762,9 @@ cv.addEventListener('click',e=>{
 const G={running:false,paused:false,lv:null,li:0,stopIdx:0,phase:'idle',mode:'idle',segT:0,segDur:1,phaseT:0,queue:[],batch:[],cur:null,tray:[],kp:'',paid:false,onboard:[],score:0,strikes:0,alightAsked:false,warned:false,turnUntil:0,token:0,peekUntil:0};
 const panel=$('#panel');
 
-/* the windshield is one long Flow-made drive per level (videos/levelN.mp4, ~60s). The clip is tied to the
-   trip: its start is the first stop and its end the last, so it never loops or fades. It plays in slow
-   motion, leaning a little faster or slower to stay in step with the bus, and stops at every station.
-   If a clip can't load, the drawn scene underneath shows instead. */
-const SLOWMO=0.55;
+/* the windshield is one long Flow-made drive per level (videos/levelN.mp4, ~60s). It plays at normal speed
+   while the bus drives and stops at every station; if a long ride outlasts the clip it carries on from the
+   start (no fade). If a clip can't load, the drawn scene underneath shows instead. */
 const VID=$('#vidA');let vidSrc='';
 VID.muted=true;VID.addEventListener('error',()=>{if(VID.getAttribute('src'))$('#stage').classList.remove('has-video');});
 $('#vidB').remove();
@@ -775,25 +773,13 @@ function setLevelVideo(i){
   VID.pause();VID.src=src;VID.load();VID.classList.add('on');
   $('#stage').classList.add('has-video');
 }
-function tripFraction(){
-  if(!G.running||!G.lv)return null;
-  const legs=G.lv.stops.length-1,p=G.phase==='drive'?Math.min(1,G.segT/G.segDur):0;
-  return Math.min(1,(G.stopIdx+p)/legs);
-}
 function updateVideo(){
   if(!vidSrc)return;
-  if(!G.running&&VID.duration&&VID.currentTime>=VID.duration-0.05)VID.currentTime=0;   // behind the menu only
-  const moving=!G.paused&&S.speed>=0.08&&!(VID.duration&&VID.currentTime>=VID.duration-0.05);
+  if(VID.duration&&VID.currentTime>=VID.duration-0.05)VID.currentTime=0;
+  const moving=!G.paused&&S.speed>=0.08;
   if(!moving){if(!VID.paused)VID.pause();return;}
-  let rate=SLOWMO*Math.max(0.3,Math.min(1,S.speed));
-  const f=tripFraction();
-  if(f!=null&&VID.duration){
-    const lag=f*VID.duration-VID.currentTime;   // seconds behind (+) or ahead (-) of where the bus is
-    rate*=Math.max(0.5,Math.min(1.8,1+lag/6));
-  }
-  rate=Math.max(0.2,Math.min(1,rate));
   if(VID.paused)VID.play().catch(()=>{});
-  if(Math.abs(VID.playbackRate-rate)>0.03)VID.playbackRate=rate;
+  if(VID.playbackRate!==1)VID.playbackRate=1;
 }
 function startLevel(i){
   audioInit();setLevelVideo(i);if(VID.readyState)VID.currentTime=0;
@@ -935,7 +921,7 @@ function hud(){
   $('#score').textContent=G.score;
   const lives=G.lv?G.lv.lives:3;
   $('#strikes').innerHTML=Array.from({length:lives},(_,i)=>`<i class="${i<lives-G.strikes?'':'lost'}"></i>`).join('');
-  $('#hudRoute').textContent=G.lv?G.lv.route:'يلا الأجرة';
+  $('#hudRoute').textContent=G.lv?G.lv.route:'الأجرة ورا';
   renderRoute();
 }
 function renderRoute(){
@@ -1071,7 +1057,7 @@ function openMenu(paused){
   G.paused=!!(paused&&G.running);
   const unlocked=i=>i===0||(save.stars[i-1]||0)>0;
   ov.innerHTML=`<div class="sheet">
-    <div class="logo">يلا الأجرة<small>إنت قاعد ورا السوّاق</small></div>
+    <div class="logo">الأجرة ورا<small>إنت قاعد ورا السوّاق</small></div>
     <p class="lede">كل محطة ركاب بيطلعوا ويدّوك الأجرة. احسب بسرعة، رجّع الباقي من الفكة اللي في جيبك، وادّي الأسطى المجموع قبل ما يوصل المحطة الجاية. الفكة مش هتكفي دايماً!</p>
     ${G.paused?`<button class="go" data-o="resume">كمّل المشوار</button>`:''}
     <button class="go alt" data-o="howto">إزاي تلعب؟</button>
@@ -1138,7 +1124,7 @@ ov.addEventListener('click',e=>{
     else if(o==='start')startLevel(+b.dataset.l);
     else if(o==='retry')showIntro(G.li);
     else if(o==='back')openMenu(G.paused);
-    else if(o==='menu'){G.token++;G.running=false;G.mode='idle';G.lv=null;hud();renderFares();panelWait('يلا الأجرة','اختار مشوار من القائمة');openMenu(false);}
+    else if(o==='menu'){G.token++;G.running=false;G.mode='idle';G.lv=null;hud();renderFares();panelWait('الأجرة ورا','اختار مشوار من القائمة');openMenu(false);}
   }
   if(e.target.id==='tglHelp'){save.alwaysHelp=!save.alwaysHelp;persist();e.target.setAttribute('aria-pressed',save.alwaysHelp);e.target.textContent=save.alwaysHelp?'شغال':'مقفول';}
 });
@@ -1219,11 +1205,11 @@ function tourFrame(){
 function endTour(play){
   G.tut=false;cancelAnimationFrame(T.raf);if(T.el)T.el.hidden=true;
   save.seenHowto=true;save.seenTour=true;persist();
-  G.token++;G.running=false;G.mode='idle';G.lv=null;G.score=0;G.strikes=0;hud();renderFares();panelWait('يلا الأجرة','اختار مشوار من القائمة');
+  G.token++;G.running=false;G.mode='idle';G.lv=null;G.score=0;G.strikes=0;hud();renderFares();panelWait('الأجرة ورا','اختار مشوار من القائمة');
   if(play)showIntro(0);else openMenu(false);
 }
 
-resize();hud();renderFares();panelWait('يلا الأجرة','اختار مشوار من القائمة');setLevelVideo(0);if(save.seenTour)openMenu(false);else startTour();
+resize();hud();renderFares();panelWait('الأجرة ورا','اختار مشوار من القائمة');setLevelVideo(0);if(save.seenTour)openMenu(false);else startTour();
 requestAnimationFrame(t=>{last=t;requestAnimationFrame(loop);});
 if(document.fonts&&document.fonts.load)document.fonts.load('12px Lalezar').then(()=>{}).catch(()=>{});
 })();
